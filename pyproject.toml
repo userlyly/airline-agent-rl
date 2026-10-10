@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools==75.8.0", "wheel==0.45.1"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "airline-agent-rl"
+version = "0.1.0"
+description = "Reproducible data isolation for AirlineAgent-RL"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest==8.3.5", "ruff==0.11.6"]
+# The upstream environment requires Python >=3.12,<3.14. Not installed in Phase 0.
+environment = ["tau2 @ git+https://github.com/sierra-research/tau2-bench.git@4ce7c0397c1eb65c9bbe59aeacfe1ca44a1cd699"]
+
+[tool.setuptools]
+packages = ["airline_data"]
+package-dir = {airline_data = "src/data"}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra --strict-markers --strict-config"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 88
+include = ["pyproject.toml", "src/**/*.py", "scripts/**/*.py", "tests/**/*.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["airline_data"]

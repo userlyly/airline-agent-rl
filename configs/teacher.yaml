@@ -1,0 +1,7 @@
+# Reserved Phase 1 contract; there is no collection runner in Phase 0.
+enabled: false
+domain: airline
+task_split: train24
+split_manifest: configs/splits/train_dev_split.json
+teacher_model: null
+user_simulator_model: null

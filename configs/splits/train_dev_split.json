@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "domain": "airline",
+  "source": {
+    "repository": "https://github.com/sierra-research/tau2-bench",
+    "commit": "4ce7c0397c1eb65c9bbe59aeacfe1ca44a1cd699",
+    "task_file": "data/tau2/domains/airline/tasks.json",
+    "task_file_sha256": "ccd8ba737b4cc371415af70151187788f728d6108d0916e73bb4317b40542052",
+    "split_file": "data/tau2/domains/airline/split_tasks.json",
+    "split_file_sha256": "b22ced4d9a9850ac9aea31c53bdcb6d6009058140bd9acc7db37c1d36222ba8b"
+  },
+  "parent_split": "configs/splits/official_airline.json",
+  "seed": 42,
+  "algorithm": "python-random.Random(42).shuffle-official-train-order-v1",
+  "train": [
+    "34",
+    "21",
+    "14",
+    "43",
+    "39",
+    "9",
+    "7",
+    "17",
+    "15",
+    "23",
+    "12",
+    "42",
+    "49",
+    "38",
+    "27",
+    "46",
+    "1",
+    "20",
+    "33",
+    "3",
+    "28",
+    "47",
+    "5",
+    "41"
+  ],
+  "dev": [
+    "10",
+    "11",
+    "40",
+    "0",
+    "4",
+    "36"
+  ]
+}

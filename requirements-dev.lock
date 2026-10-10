@@ -1,0 +1,9 @@
+# Phase 0 CPU tooling and all transitive runtime dependencies.
+# Install with: python -m pip install -c requirements-dev.lock -e ".[dev]"
+# Build requirements are pinned separately in pyproject.toml.
+pytest==8.3.5
+ruff==0.11.6
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.6.0
+colorama==0.4.6 ; sys_platform == "win32"

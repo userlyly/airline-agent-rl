@@ -1,0 +1,6 @@
+# Reserved Phase 3 contract; no rollout/update runner in Phase 0.
+enabled: false
+base_model: Qwen/Qwen3-4B
+task_split: train24
+validation_split: dev6
+split_manifest: configs/splits/train_dev_split.json

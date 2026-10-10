@@ -1,0 +1,4 @@
+# Keep project text stable across Windows and Linux.
+* text=auto eol=lf
+# Official snapshot bytes are hash-pinned; never apply Git line-ending filters.
+vendor/tau2/** -text

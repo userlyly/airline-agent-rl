@@ -1,0 +1,5 @@
+# Reserved Phase 5 contract; formal Test20 evaluation requires user approval.
+enabled: false
+development_split: dev6
+final_split: test20
+official_manifest: configs/splits/official_airline.json

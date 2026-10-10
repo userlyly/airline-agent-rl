@@ -1,0 +1,6 @@
+# Reserved Phase 2 contract; no trainer or GPU dependencies in Phase 0.
+enabled: false
+base_model: Qwen/Qwen3-4B
+task_split: train24
+validation_split: dev6
+split_manifest: configs/splits/train_dev_split.json
