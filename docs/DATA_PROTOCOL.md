@@ -3,12 +3,22 @@
 ## 来源与信任锚点
 
 官方仓库：[sierra-research/tau2-bench](https://github.com/sierra-research/tau2-bench)。
-固定 Commit：`4ce7c0397c1eb65c9bbe59aeacfe1ca44a1cd699`。
+固定 Commit：`5bfa7e37b36656b37dc6d022156be6563c1007f3`。
 实际从此 Commit 下载 `data/tau2/domains/airline/tasks.json`、`split_tasks.json`
 和 `LICENSE`，按原始字节保存到 `vendor/tau2/`。
 
 `configs/tau2.lock.json` 保存完整 URL 与 SHA256；`splits.py` 中的同版本哈希锚点
-用于拒绝快照和锁文件被同时替换的情况。信任根仍是经审核的仓库代码，不能抵抗攻击者
+用于拒绝快照和锁文件被同时替换的情况。该 Commit 是 2026-10-10 从 Phase 0 原 pin
+`4ce7c039` 对齐而来：两个 Commit 的 airline 三个文件逐字节相同，哈希锚点未变，
+因此只替换 Commit 与 URL，未改动任何划分结果（理由见
+[UPSTREAM_REVIEW](UPSTREAM_REVIEW.md)）。
+
+锁文件另有 `runtime_files` 段，记录运行评测才需要、但**不入库**的 6 个文件的
+SHA256：airline 的 `db.json`、`policy.md`，以及 τ² 同样从 `TAU2_DATA_DIR`
+读取的 `tau2/user_simulator/simulation_guidelines*.md`（4 个）。这些文件属
+运行态数据（`db.json` 单文件 ~7 MB），由 `airline_data.runtime_lock` 从本地
+τ² checkout 物化到被忽略的 `data/` 目录，并在使用前逐文件校验。
+入库只保存锁定值，不保存字节。信任根仍是经审核的仓库代码，不能抵抗攻击者
 同时修改验证代码。更新上游版本必须重新审核，不能运行时跟随 HEAD。
 `.gitattributes` 对官方快照禁用换行转换，防止 Windows checkout 的 CRLF 转换破坏字节哈希；
 项目自有文本统一 LF。
@@ -38,6 +48,7 @@
 
 同 Task 的全部 trial、轨迹片段、重采样和派生样本必须继承相同划分。
 Phase 0 只检查官方文件的 ID、数量和版本，没有运行 Test20 对话或性能评估。
+正式 Test20 评测的准入见下文「评测准入」。
 
 ## 训练记录准入契约
 
@@ -67,6 +78,28 @@ JSONL 逐行读取，首条错误给出文件/行号，不能跳过坏行；空�
 
 上游原生轨迹通常没有本协议完整来源字段，不能直接送入训练。
 Phase 1 适配器必须从真实采集配置填写来源并保留审计关联，而非无条件给旧数据盖章。
+
+## 评测准入
+
+评测**不是**训练入口，因此**不新增 `LeakageChecker` 的 `eval` stage**。上文的
+`stage` 依旧只接受 `teacher`/`sft`/`grpo`，也不存在任何能绕过校验的模式：
+保留这一限制，才能保证「训练侧永远看不到 Test20 ID」这一不变量在代码里可被检查。
+
+评测需要相反的准入：选择必须**恰好等于**冻结的 Test20。这由独立模块
+`airline_data.eval_guard` 负责，与 `LeakageChecker` 无共享 stage：
+
+| 准入器 | 方向 | 判定 |
+| --- | --- | --- |
+| `LeakageChecker` | 训练 | 任何 Test20/Dev6 ID 一律拒绝 |
+| `EvalGuard` | 评测 | 集合必须与官方 Test20 完全相等，多、少、重复、非字符串均拒绝 |
+
+`EvalGuard.validate_task_ids` 只接受 `split="test20"`，出现 Train24/Dev6 ID、
+未知 ID、重复 ID 或空集合都会失败。汇总 Test20 结果时同样走该准入器，
+因此把一次不完整或越界的运行当作可比基线在结构上不可能发生。
+
+评测本身还有独立于数据层的运行门控：必须显式设置
+`AIRLINE_RL_ALLOW_TEST20_EVAL=1`，且 τ² 代码 Commit 必须等于锁文件值。
+细节见 [EVALUATION](EVALUATION.md)。
 
 ## 污染风险
 

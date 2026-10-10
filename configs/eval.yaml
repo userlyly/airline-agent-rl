@@ -1,5 +1,48 @@
-# Reserved Phase 5 contract; formal Test20 evaluation requires user approval.
+# Held-out Test20 evaluation contract.
+#
+# Nothing loads this file yet: the runner reads the variables below from the
+# environment and pins the same values as defaults, so this file is the declared
+# record of the frozen protocol rather than an execution entry point.
+#
+# The real authorization gate is the AIRLINE_RL_ALLOW_TEST20_EVAL=1 environment
+# variable checked by scripts/eval/run_base_test20.sh; `enabled` stays false so no
+# default path can start a held-out run.
 enabled: false
 development_split: dev6
 final_split: test20
 official_manifest: configs/splits/official_airline.json
+
+# Frozen protocol. Changing any value changes the baseline and must be re-approved
+# before the first reported Test20 number, never after seeing one.
+#
+# num_trials=5 => 20 tasks x 5 trials = 100 simulations. The headline number is
+# successes/100, i.e. the mean per-run success probability for this configuration.
+# Each trial gets its own seed derived from `seed` (tau2 batch.py), so the trials
+# are independent runs rather than repeats of one.
+protocol:
+  runner: scripts/eval/run_base_test20.sh
+  run_name: qwen3_4b_airline_base_test20_x5
+  domain: airline
+  task_split: test
+  num_trials: 5
+  seed: 300
+  max_steps: 200
+  max_errors: 10
+  temperature: 0.0
+  agent:
+    implementation: llm_agent
+    llm: openai/qwen3-4b
+    api_base: http://127.0.0.1:8001/v1
+    served_by: scripts/eval/serve_qwen3_4b.sh
+  user:
+    implementation: user_simulator
+    llm: openai/gpt-5.6-sol
+    api_base: https://ai.ahzm.top/v1
+
+# The airline reward basis is DB + COMMUNICATE for all 50 tasks, both computed
+# locally by tau2. No LLM judge participates, so scoring is deterministic and
+# costs nothing beyond the user simulator.
+scoring:
+  reward_basis: [DB, COMMUNICATE]
+  llm_judge: false
+  summarizer: scripts/eval/summarize_results.py

@@ -3,7 +3,7 @@
   "domain": "airline",
   "source": {
     "repository": "https://github.com/sierra-research/tau2-bench",
-    "commit": "4ce7c0397c1eb65c9bbe59aeacfe1ca44a1cd699",
+    "commit": "5bfa7e37b36656b37dc6d022156be6563c1007f3",
     "task_file": "data/tau2/domains/airline/tasks.json",
     "task_file_sha256": "ccd8ba737b4cc371415af70151187788f728d6108d0916e73bb4317b40542052",
     "split_file": "data/tau2/domains/airline/split_tasks.json",

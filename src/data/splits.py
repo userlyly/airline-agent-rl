@@ -10,13 +10,37 @@ from pathlib import Path
 from typing import Any
 
 UPSTREAM_REPOSITORY = "https://github.com/sierra-research/tau2-bench"
-UPSTREAM_COMMIT = "4ce7c0397c1eb65c9bbe59aeacfe1ca44a1cd699"
+UPSTREAM_COMMIT = "5bfa7e37b36656b37dc6d022156be6563c1007f3"
 TASK_FILE = "data/tau2/domains/airline/tasks.json"
 SPLIT_FILE = "data/tau2/domains/airline/split_tasks.json"
+DB_FILE = "data/tau2/domains/airline/db.json"
+POLICY_FILE = "data/tau2/domains/airline/policy.md"
+USER_SIM_DIR = "data/tau2/user_simulator"
+# Vendored byte-for-byte under vendor/tau2/; small, committed, offline-verifiable.
 SNAPSHOT_HASHES = {
     SPLIT_FILE: "b22ced4d9a9850ac9aea31c53bdcb6d6009058140bd9acc7db37c1d36222ba8b",
     TASK_FILE: "ccd8ba737b4cc371415af70151187788f728d6108d0916e73bb4317b40542052",
     "LICENSE": "e67c5aa0074dfcaefd3c3a1aedb94cb539234aecd15d5a972574e3200e6252fe",
+}
+# Required to actually run the environment, but never committed: db.json alone is
+# ~7 MB. Hash-pinned here and materialized into the ignored data/ tree by
+# airline_data.runtime_lock before any evaluation run. The user-simulator
+# guidelines are read from TAU2_DATA_DIR too, so they belong to the same set.
+RUNTIME_HASHES = {
+    DB_FILE: "1af9fea6e03ca7ca15a22bb3fcaf3e351393e3fc9070b6777947da8996f7531b",
+    POLICY_FILE: "10dc0525421521208be39cee235bba84a16e2bcba9899eb93d92cd81d2f62fc4",
+    f"{USER_SIM_DIR}/simulation_guidelines.md": (
+        "740a29dfa64d7bc08eea3bf7493575b914a63f744acbaf7f199ee07eddaf72d3"
+    ),
+    f"{USER_SIM_DIR}/simulation_guidelines_tools.md": (
+        "cbf3d8a4d8642fd04e559862f1afef55d7dd4e6a7e727ca49e239023c599de0c"
+    ),
+    f"{USER_SIM_DIR}/simulation_guidelines_voice.md": (
+        "2442aed36d303a55b3b933860a2de9c45310b783fe9c67cb48506c58709c725f"
+    ),
+    f"{USER_SIM_DIR}/simulation_guidelines_voice_tools.md": (
+        "4a77374fb680181ffc40eda84c9810e10deb9e20c6585597a4a0256a70d40235"
+    ),
 }
 SPLIT_SEED = 42
 SPLIT_ALGORITHM = "python-random.Random(42).shuffle-official-train-order-v1"
@@ -102,23 +126,32 @@ class SplitBundle:
         return frozenset(self.official_train + self.test)
 
 
-def _verify_snapshot(root: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
-    expected_lock = {
+def upstream_file_url(path: str) -> str:
+    return (
+        "https://raw.githubusercontent.com/sierra-research/tau2-bench/"
+        f"{UPSTREAM_COMMIT}/{path}"
+    )
+
+
+def expected_upstream_lock() -> dict[str, Any]:
+    """Rebuild the exact lock payload; configs/tau2.lock.json must equal it."""
+    return {
         "schema_version": 1,
         "repository": UPSTREAM_REPOSITORY,
         "commit": UPSTREAM_COMMIT,
         "files": {
-            path: {
-                "sha256": digest,
-                "url": (
-                    "https://raw.githubusercontent.com/sierra-research/tau2-bench/"
-                    f"{UPSTREAM_COMMIT}/{path}"
-                ),
-            }
+            path: {"sha256": digest, "url": upstream_file_url(path)}
             for path, digest in SNAPSHOT_HASHES.items()
         },
+        "runtime_files": {
+            path: {"sha256": digest, "url": upstream_file_url(path)}
+            for path, digest in RUNTIME_HASHES.items()
+        },
     }
-    if read_json(root / "configs/tau2.lock.json") != expected_lock:
+
+
+def _verify_snapshot(root: Path) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    if read_json(root / "configs/tau2.lock.json") != expected_upstream_lock():
         raise SplitValidationError("Upstream lock differs from pinned trust anchors")
     for relative, expected in SNAPSHOT_HASHES.items():
         path = root / "vendor/tau2" / relative

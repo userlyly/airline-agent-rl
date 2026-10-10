@@ -4,8 +4,28 @@
 
 ## 官方 τ²-bench
 
-固定 Commit：`4ce7c0397c1eb65c9bbe59aeacfe1ca44a1cd699`。
-[固定版本源码](https://github.com/sierra-research/tau2-bench/tree/4ce7c0397c1eb65c9bbe59aeacfe1ca44a1cd699)。
+固定 Commit：`5bfa7e37b36656b37dc6d022156be6563c1007f3`。
+[固定版本源码](https://github.com/sierra-research/tau2-bench/tree/5bfa7e37b36656b37dc6d022156be6563c1007f3)。
+
+### Commit 变更（2026-10-10）
+
+Phase 0 最初固定 `4ce7c0397c1eb65c9bbe59aeacfe1ca44a1cd699`。接入评测时改为
+`5bfa7e3`，理由与核验如下：
+
+- 服务器上既有的可用 τ² 环境（含已完成运行 `qwen3_4b_airline_base50`）就在
+  `5bfa7e3`，用它与历史证据比对不需要重建环境。
+- 逐字节核对：`tasks.json` = `ccd8ba73…2052`、`split_tasks.json` = `b22ced4d…ba8b`、
+  `LICENSE` = `e67c5aa0…52fe` 在两个 Commit 上完全相同，`SNAPSHOT_HASHES` 三项
+  因此未改，仅替换 Commit 与锁文件 URL。
+- 划分结果未变：重新生成的 `official_airline.json` 与 `train_dev_split.json`
+  只有 `source.commit` 字符串变化，全部 Task ID 与顺序一致。
+- 新增 `runtime_files` 段锁定 6 个运行数据文件：airline 的 `db.json` 与
+  `policy.md`，以及 user simulator 从同一 `TAU2_DATA_DIR` 读取的
+  `tau2/user_simulator/simulation_guidelines*.md`。这些文件体积大或属运行态
+  数据，只锁哈希不入库，由 `airline_data.runtime_lock` 本地物化并校验。
+
+**未验证**：`5bfa7e3` 在远程仓库的字节内容未联网核对，本次只核对了本地
+`tau2-bench` checkout；锁文件中的 URL 属未验证项。
 
 | 已阅读文件 | 发现及后续用途 |
 | --- | --- |
@@ -19,9 +39,16 @@
 | `pyproject.toml` | τ² 1.0.1 要求 Python >=3.12,<3.14；Phase 0 核心可以不安装这些依赖 |
 
 官方 `db.json` 已通过固定版本目录树确认存在（7,042,725 字节），Policy 和 Tool 源码
-也真实存在。Phase 0 仅保存 tasks/splits/license；完整 DB 和运行环境尚未下载或验证。
-上游 `ALL_WITH_NL_ASSERTIONS` 等评估模式可能触发额外模型判定，后续应明确模式及成本，
-不能把 CLI 默认调用假设为纯本地计算。
+也真实存在。Phase 0 仅保存 tasks/splits/license；本次接入评测后，运行所需的
+6 个文件由锁文件的 `runtime_files` 记录哈希、在本地物化使用，仍不入库；
+`tasks.json`/`split_tasks.json` 继续以原字节快照入库。
+
+上游 `ALL_WITH_NL_ASSERTIONS` 等评估模式可能触发额外模型判定。接入时已核实：
+airline 全部 50 个 task 的 `reward_basis` 均为 `(DB, COMMUNICATE)`，
+`NL_ASSERTION` 不在其中，因此默认路径不会调用 LLM judge；且 CLI 没有可切换
+`evaluation_type` 的开关（job 级默认 `EvaluationType.ALL` 仍按 per-task
+`reward_basis` 驱动）。既有 `base50` 运行记录中 `nl_assertions` 全为 `None`，
+与这一判断一致。评测仍有一个外部依赖：User Simulator 会调用付费 API。
 
 ## 依赖方式
 
